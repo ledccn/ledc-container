@@ -157,7 +157,7 @@ abstract class Manager
     {
         $name = $name ?? $this->getDefaultDriver();
 
-        foreach ((array) $name as $cacheName) {
+        foreach ((array)$name as $cacheName) {
             if (isset($this->drivers[$cacheName])) {
                 unset($this->drivers[$cacheName]);
             }
