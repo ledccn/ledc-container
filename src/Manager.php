@@ -140,7 +140,11 @@ abstract class Manager
 
         // 从容器创建
         if ($this->app->bound($name)) {
-            return $this->app->make($name, $params);
+            $newInstance = true;
+            if (property_exists($this, 'newInstance')) {
+                $newInstance = $this->newInstance;
+            }
+            return $this->app->make($name, $params, $newInstance);
         }
 
         // 从命名空间创建
