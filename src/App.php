@@ -2,6 +2,7 @@
 
 namespace Ledc\Container;
 
+use Closure;
 use think\Container;
 
 /**
@@ -9,6 +10,12 @@ use think\Container;
  */
 class App extends Container
 {
+    /**
+     * 容器对象实例
+     * @var App|Closure
+     */
+    protected static $instance;
+
     /**
      * 构造函数
      */
