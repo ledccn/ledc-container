@@ -2,6 +2,7 @@
 
 namespace Ledc\Container;
 
+use BadMethodCallException;
 use InvalidArgumentException;
 use think\helper\Str;
 
@@ -27,6 +28,11 @@ abstract class Manager
      * @var string|null
      */
     protected ?string $namespace = null;
+    /**
+     * 使用容器创建对象时，始终创建新的驱动对象实例
+     * @var bool
+     */
+    protected bool $alwaysNewInstance = false;
 
     /**
      * 构造函数
@@ -67,7 +73,7 @@ abstract class Manager
      * @param string $name
      * @return mixed
      */
-    protected function getDriver(string $name): mixed
+    final protected function getDriver(string $name): mixed
     {
         return $this->drivers[$name] ?? $this->createDriver($name);
     }
@@ -93,11 +99,22 @@ abstract class Manager
     }
 
     /**
+     * 获取驱动参数
+     * @param string $name
+     * @return array
+     */
+    protected function resolveParams(string $name): array
+    {
+        $config = $this->resolveConfig($name);
+        return [$config];
+    }
+
+    /**
      * 获取驱动类
      * @param string $type
      * @return string
      */
-    protected function resolveClass(string $type): string
+    final protected function resolveClass(string $type): string
     {
         if ($this->namespace || str_contains($type, '\\')) {
             $class = str_contains($type, '\\') ? $type : $this->namespace . Str::studly($type);
@@ -111,23 +128,12 @@ abstract class Manager
     }
 
     /**
-     * 获取驱动参数
-     * @param string $name
-     * @return array
-     */
-    protected function resolveParams(string $name): array
-    {
-        $config = $this->resolveConfig($name);
-        return [$config];
-    }
-
-    /**
      * 创建驱动
      * @param string $name
      * @return mixed
      *
      */
-    protected function createDriver(string $name): mixed
+    final protected function createDriver(string $name): mixed
     {
         $type = $this->resolveType($name);
         $params = $this->resolveParams($name);
@@ -140,10 +146,7 @@ abstract class Manager
 
         // 从容器创建
         if ($this->app->bound($name)) {
-            $newInstance = true;
-            if (property_exists($this, 'newInstance')) {
-                $newInstance = $this->newInstance;
-            }
+            $newInstance = $this->alwaysNewInstance;
             return $this->app->make($name, $params, $newInstance);
         }
 
@@ -157,7 +160,7 @@ abstract class Manager
      * @param array|string|null $name
      * @return static
      */
-    public function forgetDriver(array|string $name = null): static
+    final public function forgetDriver(array|string $name = null): static
     {
         $name = $name ?? $this->getDefaultDriver();
 
@@ -171,6 +174,27 @@ abstract class Manager
     }
 
     /**
+     * 清理所有驱动实例
+     * @return void
+     */
+    final public function clearDriver(): void
+    {
+        while ($this->drivers) {
+            $key = key($this->drivers);
+            unset($this->drivers[$key]);
+        }
+    }
+
+    /**
+     * 获取容器中的对象实例 不存在则创建（单例模式）
+     * @return static
+     */
+    public static function getInstance(): static
+    {
+        return App::pull(static::class);
+    }
+
+    /**
      * 动态调用
      * @param string $method
      * @param array $parameters
@@ -179,5 +203,20 @@ abstract class Manager
     public function __call(string $method, array $parameters)
     {
         return $this->driver()->$method(...$parameters);
+    }
+
+    /**
+     * 在静态上下文中调用一个不可访问方法时，__callStatic() 会被调用
+     * @param string $name
+     * @param array $arguments
+     * @return mixed
+     */
+    public static function __callStatic(string $name, array $arguments)
+    {
+        $driver = static::getInstance()->driver();
+        if (is_callable([$driver, $name])) {
+            return $driver->{$name}(... $arguments);
+        }
+        throw new BadMethodCallException('未定义的方法：' . $name);
     }
 }
