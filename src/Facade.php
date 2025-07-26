@@ -11,7 +11,7 @@ class Facade
      * 始终创建新的对象实例
      * @var bool
      */
-    protected static bool $alwaysNewInstance;
+    protected static bool $alwaysNewInstance = false;
 
     /**
      * 创建Facade实例

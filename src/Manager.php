@@ -179,8 +179,8 @@ abstract class Manager
      */
     final public function clearDriver(): void
     {
-        while ($this->drivers) {
-            $key = key($this->drivers);
+        $keys = array_keys($this->drivers);
+        foreach ($keys as $key) {
             unset($this->drivers[$key]);
         }
     }
