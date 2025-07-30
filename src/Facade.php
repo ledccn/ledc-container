@@ -53,7 +53,7 @@ class Facade
      */
     public static function instance(...$args): object
     {
-        if (__CLASS__ != static::class) {
+        if (self::class !== static::class) {
             return self::createFacade('', $args);
         }
         return self::createFacade(static::class, $args);
@@ -69,7 +69,7 @@ class Facade
      */
     public static function make(string $class, true|array $args = [], bool $newInstance = false): object
     {
-        if (__CLASS__ != static::class) {
+        if (self::class !== static::class) {
             return self::__callStatic('make', func_get_args());
         }
 

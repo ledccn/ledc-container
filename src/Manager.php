@@ -12,12 +12,6 @@ use think\helper\Str;
 abstract class Manager
 {
     /**
-     * App实例
-     * @var App
-     */
-    protected App $app;
-
-    /**
      * 驱动
      * @var array
      */
@@ -36,11 +30,10 @@ abstract class Manager
 
     /**
      * 构造函数
-     * @param App $app
+     * @param App $app App实例
      */
-    public function __construct(App $app)
+    public function __construct(protected App $app)
     {
-        $this->app = $app;
     }
 
     /**
@@ -54,7 +47,7 @@ abstract class Manager
      * @param null|string $name
      * @return mixed
      */
-    protected function driver(string $name = null): mixed
+    protected function driver(?string $name = null): mixed
     {
         $name = $name ?: $this->getDefaultDriver();
 
@@ -160,9 +153,9 @@ abstract class Manager
      * @param array|string|null $name
      * @return static
      */
-    final public function forgetDriver(array|string $name = null): static
+    final public function forgetDriver(array|string|null $name = null): static
     {
-        $name = $name ?? $this->getDefaultDriver();
+        $name ??= $this->getDefaultDriver();
 
         foreach ((array)$name as $cacheName) {
             if (isset($this->drivers[$cacheName])) {
