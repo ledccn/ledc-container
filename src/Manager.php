@@ -16,7 +16,6 @@ abstract class Manager
      * @var array
      */
     protected array $drivers = [];
-
     /**
      * 驱动的命名空间
      * @var string|null
@@ -27,14 +26,6 @@ abstract class Manager
      * @var bool
      */
     protected bool $alwaysNewInstance = false;
-
-    /**
-     * 构造函数
-     * @param App $app App实例
-     */
-    public function __construct(protected App $app)
-    {
-    }
 
     /**
      * 默认驱动
@@ -138,14 +129,14 @@ abstract class Manager
         }
 
         // 从容器创建
-        if ($this->app->bound($name)) {
+        if (static::app()->bound($name)) {
             $newInstance = $this->alwaysNewInstance;
-            return $this->app->make($name, $params, $newInstance);
+            return static::app()->make($name, $params, $newInstance);
         }
 
         // 从命名空间创建
         $class = $this->resolveClass($type);
-        return $this->app->invokeClass($class, $params);
+        return static::app()->invokeClass($class, $params);
     }
 
     /**
@@ -176,6 +167,15 @@ abstract class Manager
         foreach ($keys as $key) {
             unset($this->drivers[$key]);
         }
+    }
+
+    /**
+     * 获取容器实例
+     * @return App
+     */
+    public static function app(): App
+    {
+        return App::getInstance();
     }
 
     /**
