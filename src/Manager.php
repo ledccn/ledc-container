@@ -20,7 +20,7 @@ abstract class Manager
      */
     protected array $customCreators = [];
     /**
-     * 驱动
+     * 已缓存的驱动对象实例
      * @var array|array<string, object>
      */
     protected array $drivers = [];
@@ -30,7 +30,7 @@ abstract class Manager
      */
     protected ?string $namespace = null;
     /**
-     * 使用容器创建对象时，始终创建新的驱动对象实例
+     * 始终创建新的驱动对象实例
      * @var bool
      */
     protected bool $alwaysNewInstance = false;
@@ -155,7 +155,7 @@ abstract class Manager
             return $this->$method(...$params);
         }
 
-        // 从容器创建
+        // 从容器创建（tips：使用name，以区分不同的对象）
         if (static::app()->bound($name)) {
             $newInstance = $this->alwaysNewInstance;
             return static::app()->make($name, $params, $newInstance);
@@ -188,7 +188,7 @@ abstract class Manager
      * 清理所有驱动实例
      * @return void
      */
-    final public function clearDriver(): void
+    final public function clearDrivers(): void
     {
         $keys = array_keys($this->drivers);
         foreach ($keys as $key) {
