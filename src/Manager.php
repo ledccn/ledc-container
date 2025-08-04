@@ -155,10 +155,10 @@ abstract class Manager
             return $this->$method(...$params);
         }
 
-        // 从容器创建（tips：使用name，以区分不同的对象）
-        if (static::app()->bound($name)) {
-            $newInstance = $this->alwaysNewInstance;
-            return static::app()->make($name, $params, $newInstance);
+        // 从容器创建
+        $abstract = $this->alwaysNewInstance ? $type : $name;
+        if (static::app()->bound($abstract)) {
+            return static::app()->make($abstract, $params, $this->alwaysNewInstance);
         }
 
         // 从命名空间创建
