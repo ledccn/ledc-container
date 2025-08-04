@@ -39,7 +39,7 @@ abstract class Manager
      * @param null|string $name
      * @return mixed
      */
-    protected function driver(?string $name = null): mixed
+    final protected function driver(?string $name = null): mixed
     {
         $name = $name ?: $this->getDefaultDriver();
 
@@ -176,24 +176,24 @@ abstract class Manager
     }
 
     /**
+     * 获取容器中的对象实例 不存在则创建（单例模式）
+     * @return static
+     */
+    final public static function getInstance(): static
+    {
+        if (self::class === static::class) {
+            throw new LogicException('请使用子类调用 getInstance() 方法');
+        }
+        return App::pull(static::class);
+    }
+
+    /**
      * 获取容器实例
      * @return App
      */
     public static function app(): App
     {
         return App::getInstance();
-    }
-
-    /**
-     * 获取容器中的对象实例 不存在则创建（单例模式）
-     * @return static
-     */
-    public static function getInstance(): static
-    {
-        if (self::class === static::class) {
-            throw new LogicException('子类才能调用此方法');
-        }
-        return App::pull(static::class);
     }
 
     /**
