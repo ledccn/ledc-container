@@ -3,6 +3,7 @@
 namespace Ledc\Container;
 
 use BadMethodCallException;
+use Closure;
 use InvalidArgumentException;
 use LogicException;
 use think\helper\Str;
@@ -13,8 +14,14 @@ use think\helper\Str;
 abstract class Manager
 {
     /**
+     * 已注册的自定义驱动创建者
+     * - The registered custom driver creators.
+     * @var array|array<string, Closure>
+     */
+    protected array $customCreators = [];
+    /**
      * 驱动
-     * @var array
+     * @var array|array<string, object>
      */
     protected array $drivers = [];
     /**
@@ -55,17 +62,26 @@ abstract class Manager
             return $this->createDriver($name);
         }
 
-        return $this->drivers[$name] = $this->getDriver($name);
+        // 如果之前尚未创建给定的驱动实例，则创建并缓存它，以便下次快速返回
+        if (!isset($this->drivers[$name])) {
+            $this->drivers[$name] = $this->createDriver($name);
+        }
+
+        // 返回已缓存的驱动对象实例
+        return $this->drivers[$name];
     }
 
     /**
-     * 获取驱动实例
-     * @param string $name
-     * @return mixed
+     * 注册自定义驱动创建者闭包
+     * - Register a custom driver creator Closure.
+     * @param string $driver
+     * @param Closure $callback
+     * @return static
      */
-    final protected function getDriver(string $name): mixed
+    final public function extend(string $driver, Closure $callback): static
     {
-        return $this->drivers[$name] ?? $this->createDriver($name);
+        $this->customCreators[$driver] = $callback;
+        return $this;
     }
 
     /**
@@ -128,6 +144,11 @@ abstract class Manager
         $type = $this->resolveType($name);
         $params = $this->resolveParams($name);
 
+        // 已注册的自定义驱动创建者
+        if (isset($this->customCreators[$type])) {
+            return static::app()->invokeFunction($this->customCreators[$type], $params);
+        }
+
         // 从方法创建
         $method = 'create' . Str::studly($type) . 'Driver';
         if (method_exists($this, $method)) {
@@ -176,6 +197,15 @@ abstract class Manager
     }
 
     /**
+     * 获取所有驱动实例
+     * @return array
+     */
+    final public function getDrivers(): array
+    {
+        return $this->drivers;
+    }
+
+    /**
      * 获取容器中的对象实例 不存在则创建（单例模式）
      * @return static
      */
@@ -191,7 +221,7 @@ abstract class Manager
      * 获取容器实例
      * @return App
      */
-    public static function app(): App
+    final public static function app(): App
     {
         return App::getInstance();
     }
