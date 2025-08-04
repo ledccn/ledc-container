@@ -4,6 +4,7 @@ namespace Ledc\Container;
 
 use BadMethodCallException;
 use InvalidArgumentException;
+use LogicException;
 use think\helper\Str;
 
 /**
@@ -47,6 +48,11 @@ abstract class Manager
                 'Unable to resolve NULL driver for [%s].',
                 static::class
             ));
+        }
+
+        // 始终创建新的驱动对象实例
+        if ($this->alwaysNewInstance) {
+            return $this->createDriver($name);
         }
 
         return $this->drivers[$name] = $this->getDriver($name);
@@ -184,6 +190,9 @@ abstract class Manager
      */
     public static function getInstance(): static
     {
+        if (self::class === static::class) {
+            throw new LogicException('子类才能调用此方法');
+        }
         return App::pull(static::class);
     }
 
